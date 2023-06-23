@@ -27,7 +27,7 @@ struct TargetFaceView: View {
     }
     
     var body: some View {
-
+        
         VStack {
             GeometryReader { geo in
                 VStack
@@ -44,10 +44,8 @@ struct TargetFaceView: View {
                             .background(Circle().fill(colors.last!))
                             .frame(width: geo.size.width/10/2, height: geo.size.width/10/2)
                         Image(systemName: "plus").scaleEffect(0.3)
-
-                        MarkerView().offset(x: 0, y: 0).zIndex(0)
                         
-
+                        MarkerView().offset(x: markerLocation.x - geo.size.width/2, y: markerLocation.y - geo.size.height/2).zIndex(0)
                     }
                     .scaleEffect(scale, anchor: UnitPoint.topTrailing)
                     .gesture(TapGesture(count: 2).onEnded({ value in
@@ -61,22 +59,26 @@ struct TargetFaceView: View {
                         }
                     })
                     )
-
+                    
                 }
                 .frame(height: geo.size.width).padding(.bottom, 5)
             }
-            TouchPadView()
-                .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
-                            .updating($location) { (value, state, transaction) in
-                                state = value.location
-                                DispatchQueue.main.async {
-                                    markerLocation = value.location
-                                }
-//
-                                print("loc: \(value.location)")
-                            }.onEnded { val in
-                                print("ENDED \(val)")
-                            })
+            
+            GeometryReader { grd in
+                TouchPadView()
+                    .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        .updating($location) { (value, state, transaction) in
+                            state = value.location
+                            DispatchQueue.main.async {
+                                markerLocation = CGPoint(x: value.location.x, y: value.location.y)
+                            }
+                            //
+                            print("size: \(grd.size)")
+                            print("loc: \(value.location)")
+                        }.onEnded { val in
+                            print("ENDED \(val)")
+                        })
+            }
         }
         
         
@@ -95,7 +97,7 @@ struct ContentView : View {
     var body: some View {
         VStack {
             TargetFaceView()
-//            TouchPadView()
+            //            TouchPadView()
         }
     }
 }
