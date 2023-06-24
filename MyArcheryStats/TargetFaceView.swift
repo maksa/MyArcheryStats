@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MarkerView : View {
     var body: some View {
-        Image(systemName: "plus").resizable().frame(width: 40, height:40).foregroundColor(Color.green)
+        Image(systemName: "plus").resizable().frame(width: 30, height:30).foregroundColor(Color("Marker"))
     }
 }
 
@@ -26,6 +26,10 @@ struct TargetFaceView: View {
         return v < 0 ? 0 : v
     }
     
+    func quadrantForTap( proxy: GeometryProxy, coords: CGPoint ) {
+        
+    }
+    var offset = 10
     var body: some View {
         
         VStack {
@@ -45,25 +49,20 @@ struct TargetFaceView: View {
                             .frame(width: geo.size.width/10/2, height: geo.size.width/10/2)
                         Image(systemName: "plus").scaleEffect(0.3)
                         
-                        MarkerView().offset(x: markerLocation.x - geo.size.width/2, y: markerLocation.y - geo.size.height/2).zIndex(0)
+                        MarkerView().offset(x: markerLocation.x - geo.size.width/2, y: markerLocation.y - geo.size.height/2 + CGFloat(offset)).zIndex(0)
                     }
                     .scaleEffect(scale, anchor: UnitPoint.topTrailing)
-                    .gesture(TapGesture(count: 2).onEnded({ value in
-                        print(value)
+                    .gesture( SpatialTapGesture( count: 2, coordinateSpace: .local ).onEnded({ val in
+                        print(val)
                         withAnimation {
-                            if( scale == 2.0 ) {
-                                scale = 1.0
-                            } else {
-                                scale = 2.0
-                            }
+                            scale = (scale == 2.0) ? 1.0 : 2.0
                         }
-                    })
-                    )
+        
+                    }))
                     
                 }
                 .frame(height: geo.size.width).padding(.bottom, 5)
             }
-            
             GeometryReader { grd in
                 TouchPadView()
                     .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
@@ -78,6 +77,7 @@ struct TargetFaceView: View {
                         }.onEnded { val in
                             print("ENDED \(val)")
                         })
+                    .offset(y:CGFloat(offset))
             }
         }
         
@@ -89,7 +89,7 @@ struct TargetFaceView: View {
 struct TouchPadView : View {
     var body: some View {
         VStack {
-            Color.orange
+            RoundedRectangle(cornerRadius: 24.0, style: .continuous).fill(.gray)
         }
     }
 }
