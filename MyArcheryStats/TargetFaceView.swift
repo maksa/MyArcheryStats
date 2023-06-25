@@ -13,31 +13,42 @@ struct MarkerView : View {
     }
 }
 
+enum Corner {
+    case topleft
+    case topright
+    case bottomleft
+    case bottomright
+}
+
 struct TargetFaceView: View {
     @GestureState private var location: CGPoint = .zero
     @State var markerLocation : CGPoint = .zero
     var lineWidth = 0.5
-    var colors : [Color] = [ .white, .white, .black, .black, .blue, .blue, .red, .red, .yellow, .yellow, .yellow, .yellow ]
-    var bordercolors : [Color] = [ .black, .black, .black, .white, .black, .black, .black, .black, .black, .black, .black, .black]
+    var colors : [Color] = [ .white, .white, .black, .black, .blue, .blue, .red, .red, .yellow, .yellow, .yellow]
+    var bordercolors : [Color] = [ .black, .black, .black, .white, .black, .black, .black, .black, .black, .black, .black]
     @State var scale = 1.0
     
+    func targetWidth( proxy: GeometryProxy ) -> Double {
+        return min(proxy.frame(in: .local).width, UIScreen.main.bounds.height/2)
+    }
+    
     func widthFromGeo( proxy: GeometryProxy, num: Int ) -> Double {
-        let v = proxy.size.width - (proxy.size.width/10)*Double(num)
+        let v = targetWidth(proxy: proxy) - targetWidth(proxy:proxy)/10*Double(num)
         return v < 0 ? 0 : v
     }
     
-    func quadrantForTap( proxy: GeometryProxy, coords: CGPoint ) {
+    func quadrantForTap( proxy: GeometryProxy, coords: CGPoint ) -> Corner {
         
+        return .topright
     }
     var offset = 10
     var body: some View {
-        
-        VStack {
+        VStack(spacing:0) {
             GeometryReader { geo in
-                VStack
+                VStack(spacing: 0)
                 {
                     ZStack {
-                        ForEach((0...11), id: \.self) { num in
+                        ForEach((0..<11), id: \.self) { num in
                             Circle()
                                 .strokeBorder(bordercolors[num], lineWidth: lineWidth)
                                 .background(Circle().fill(colors[num]))
@@ -49,7 +60,7 @@ struct TargetFaceView: View {
                             .frame(width: geo.size.width/10/2, height: geo.size.width/10/2)
                         Image(systemName: "plus").scaleEffect(0.3)
                         
-                        MarkerView().offset(x: markerLocation.x - geo.size.width/2, y: markerLocation.y - geo.size.height/2 + CGFloat(offset)).zIndex(0)
+                        MarkerView().offset(x: markerLocation.x - geo.size.width/2, y: markerLocation.y - geo.size.height/2 + CGFloat(offset)).zIndex(0).scaleEffect(1/scale)
                     }
                     .scaleEffect(scale, anchor: UnitPoint.topTrailing)
                     .gesture( SpatialTapGesture( count: 2, coordinateSpace: .local ).onEnded({ val in
@@ -59,10 +70,19 @@ struct TargetFaceView: View {
                         }
         
                     }))
+                    .gesture(MagnificationGesture()
+                        .onChanged({ scale in
+                        print("changed scale \(scale)")
+                    })
+                        .onEnded({ scaled in
+                        print("ended scale: \(scaled)")
+                    }))
                     
-                }
-                .frame(height: geo.size.width).padding(.bottom, 5)
+                
+                    
+                }.position(x: geo.frame(in: .local).midX, y: geo.frame(in: .local).midY)
             }
+            
             GeometryReader { grd in
                 TouchPadView()
                     .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
@@ -77,7 +97,8 @@ struct TargetFaceView: View {
                         }.onEnded { val in
                             print("ENDED \(val)")
                         })
-                    .offset(y:CGFloat(offset))
+//                    .offset(y:CGFloat(offset))
+//                    .frame(height: UIScreen.main.bounds.size.height/3)
             }
         }
         
@@ -88,8 +109,15 @@ struct TargetFaceView: View {
 
 struct TouchPadView : View {
     var body: some View {
-        VStack {
-            RoundedRectangle(cornerRadius: 24.0, style: .continuous).fill(.gray)
+        VStack(spacing:0) {
+            ZStack {
+                Rectangle().fill(Color("Touchpad"))
+                RoundedRectangle(cornerRadius: 24.0, style: .continuous)
+                    .foregroundStyle(
+                        Color("Touchpad").gradient
+                            .shadow(.inner(color: .white.opacity(0.3), radius: 1, x: 1, y: 1))
+                            .shadow(.inner(radius: 1, x: 2, y: 2))
+                    )            }
         }
     }
 }
